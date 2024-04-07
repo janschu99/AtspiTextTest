@@ -3,31 +3,38 @@
 
 #include <atspi/atspi.h>
 
+typedef enum {
+  EDIT_CHAR,
+  EDIT_WORD,
+  EDIT_SENTENCE,
+  EDIT_PARAGRAPH,
+  EDIT_FILE,
+  EDIT_LINE,
+  EDIT_PAGE,
+  EDIT_SELECTION
+} EditDistance;
+
 typedef struct {
-  AtspiEventListener *pFocusListener;
-  AtspiEventListener *pCaretListener;
-  AtspiText *pAccessibleText;
+  AtspiEventListener* pFocusListener;
+  AtspiEventListener* pCaretListener;
+  AtspiText* pAccessibleText;
 } EditorExternal;
 
 EditorExternal INSTANCE;
 
-typedef enum {
-  EDIT_CHAR, EDIT_WORD, EDIT_SENTENCE, EDIT_PARAGRAPH, EDIT_FILE, EDIT_LINE, EDIT_PAGE, EDIT_SELECTION,
-} EditDistance;
-
-void output(const char *szText/*, int iOffset unused*/) {
+void output(const char* szText) {
   atspi_generate_keyboard_event(0, szText, ATSPI_KEY_STRING, NULL);
 }
 
-void deleteChar(/*int iLength, int iOffset*/) {
+void deleteChar() {
   atspi_generate_keyboard_event(XK_BackSpace, NULL, ATSPI_KEY_SYM, NULL);
 }
 
 std::string get_context(int iOffset, int iLength) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (textobj != nullptr) {
-    char* text = atspi_text_get_text(textobj, iOffset, iOffset + iLength, NULL);
-    if (text != nullptr) {
+  AtspiText* textobj = INSTANCE.pAccessibleText;
+  if (textobj!=nullptr) {
+    char* text = atspi_text_get_text(textobj, iOffset, iOffset+iLength, NULL);
+    if (text!=nullptr) {
       std::string context = text;
       free(text);
       return context;
@@ -37,59 +44,59 @@ std::string get_context(int iOffset, int iLength) {
 }
 
 void move(bool bForwards, EditDistance iDist) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (textobj == nullptr) return;
-  GError *err = nullptr;
+  AtspiText* textobj = INSTANCE.pAccessibleText;
+  if (textobj==nullptr) return;
+  GError* err = nullptr;
   int caret_pos = atspi_text_get_caret_offset(textobj, &err);
-  if (err != nullptr) {
+  if (err!=nullptr) {
     fprintf(stderr, "Failed to get the caret: %s\n", err->message);
     g_error_free(err);
     return;
   }
   int length = atspi_text_get_character_count(textobj, &err);
-  if (err != nullptr) {
+  if (err!=nullptr) {
     fprintf(stderr, "Failed to get the character count: %s\n", err->message);
     g_error_free(err);
     return;
   }
-  if (length == 0) return;
+  if (length==0) return;
   long new_position = caret_pos;
   AtspiTextBoundaryType boundary = ATSPI_TEXT_BOUNDARY_CHAR;
   switch (iDist) {
     case EDIT_CHAR:
-      if (bForwards) new_position = std::min<long>(caret_pos + 1, length - 1);
-      else new_position = std::max<long>(caret_pos - 1, 0);
+      if (bForwards) new_position=std::min<long>(caret_pos+1, length-1);
+      else new_position=std::max<long>(caret_pos-1, 0);
       break;
     case EDIT_FILE:
-      if (bForwards) new_position = length - 1;
-      else new_position = 0;
+      if (bForwards) new_position=length-1;
+      else new_position=0;
       break;
     case EDIT_WORD:
-      boundary = ATSPI_TEXT_BOUNDARY_WORD_START;
+      boundary=ATSPI_TEXT_BOUNDARY_WORD_START;
       break;
     case EDIT_LINE:
-      boundary = ATSPI_TEXT_BOUNDARY_LINE_START;
+      boundary=ATSPI_TEXT_BOUNDARY_LINE_START;
       break;
     case EDIT_SENTENCE:
-      boundary = ATSPI_TEXT_BOUNDARY_SENTENCE_START;
+      boundary=ATSPI_TEXT_BOUNDARY_SENTENCE_START;
       break;
     default:
       break;
   }
   AtspiTextRange* range = nullptr;
-  if (boundary != ATSPI_TEXT_BOUNDARY_CHAR) {
-    if (bForwards) range = atspi_text_get_text_after_offset(textobj, caret_pos, boundary, &err);
-    else range = atspi_text_get_text_before_offset(textobj, caret_pos, boundary, &err);
-    if (err != nullptr) {
+  if (boundary!=ATSPI_TEXT_BOUNDARY_CHAR) {
+    if (bForwards) range=atspi_text_get_text_after_offset(textobj, caret_pos, boundary, &err);
+    else range=atspi_text_get_text_before_offset(textobj, caret_pos, boundary, &err);
+    if (err!=nullptr) {
       fprintf(stderr, "Failed to get the text after/befor the offset: %s\n", err->message);
       g_error_free(err);
       return;
     }
-    if (range != nullptr) new_position = range->start_offset;
+    if (range!=nullptr) new_position=range->start_offset;
     g_free(range);
   }
   atspi_text_set_caret_offset(textobj, new_position, &err);
-  if (err != nullptr) {
+  if (err!=nullptr) {
     fprintf(stderr, "Failed to set the caret offset: %s\n", err->message);
     g_error_free(err);
     return;
@@ -97,11 +104,11 @@ void move(bool bForwards, EditDistance iDist) {
 }
 
 std::string get_text_around_cursor(EditDistance distance) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (textobj == nullptr) return "";
-  GError *err = nullptr;
+  AtspiText* textobj = INSTANCE.pAccessibleText;
+  if (textobj==nullptr) return "";
+  GError* err = nullptr;
   int caret_pos = atspi_text_get_caret_offset(textobj, &err);
-  if (err != nullptr) {
+  if (err!=nullptr) {
     fprintf(stderr, "Failed to get the caret offset: %s\n", err->message);
     g_error_free(err);
     return "";
@@ -111,77 +118,75 @@ std::string get_text_around_cursor(EditDistance distance) {
   switch (distance) {
     case EDIT_FILE: {
       int length = atspi_text_get_character_count(textobj, nullptr);
-      char* gtext = atspi_text_get_text(textobj, 0, length, nullptr);
-      text = gtext;
-      free(gtext);
+      char* textBuffer = atspi_text_get_text(textobj, 0, length, nullptr);
+      text=textBuffer;
+      free(textBuffer);
       return text;
     }
       break;
     case EDIT_WORD:
-      granularity = ATSPI_TEXT_GRANULARITY_WORD;
+      granularity=ATSPI_TEXT_GRANULARITY_WORD;
       break;
     case EDIT_LINE:
-      granularity = ATSPI_TEXT_GRANULARITY_LINE;
+      granularity=ATSPI_TEXT_GRANULARITY_LINE;
       break;
     case EDIT_SENTENCE:
-      granularity = ATSPI_TEXT_GRANULARITY_SENTENCE;
+      granularity=ATSPI_TEXT_GRANULARITY_SENTENCE;
       break;
     case EDIT_PARAGRAPH:
-      // TODO: figure out why ATSPI_TEXT_GRANULARITY_PARAGRAPH doesn't work.
-      granularity = ATSPI_TEXT_GRANULARITY_PARAGRAPH;
+      //TODO: figure out why ATSPI_TEXT_GRANULARITY_PARAGRAPH doesn't work.
+      granularity=ATSPI_TEXT_GRANULARITY_PARAGRAPH;
       break;
     default:
       return "";
   }
   AtspiTextRange* range = atspi_text_get_string_at_offset(textobj, caret_pos, granularity, &err);
-  if (err != nullptr) {
+  if (err!=nullptr) {
     fprintf(stderr, "Failed to get the caret offset: %s\n", err->message);
     g_error_free(err);
     return "";
   }
-  if (range != nullptr) {
-    text = range->content;
+  if (range!=nullptr) {
+    text=range->content;
     free(range);
   }
   return text;
 }
 
-void handle_event(const AtspiEvent *pEvent) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
+void handle_event(const AtspiEvent* pEvent) {
+  AtspiText* textobj = INSTANCE.pAccessibleText;
   if (textobj) {
     g_object_unref(textobj);
-    textobj = NULL;
+    textobj=NULL;
   }
-  AtspiAccessible *acc = pEvent->source;
+  AtspiAccessible* acc = pEvent->source;
   g_object_ref(acc);
-  textobj = atspi_accessible_get_text_iface(acc);
-  INSTANCE.pAccessibleText = textobj;
+  textobj=atspi_accessible_get_text_iface(acc);
+  INSTANCE.pAccessibleText=textobj;
   g_object_unref(acc);
 }
 
-static void focus_listener(AtspiEvent *pEvent, void *pUserData) {
+static void focus_listener(AtspiEvent* pEvent, void* pUserData) {
   fprintf(stderr, "Focus\n");
   handle_event(pEvent);
-  if (INSTANCE.pAccessibleText) {
-    g_object_ref(INSTANCE.pAccessibleText);
-  }
+  if (INSTANCE.pAccessibleText!=NULL) g_object_ref(INSTANCE.pAccessibleText);
   move(true, EDIT_CHAR);
 }
 
-static void caret_listener(AtspiEvent *pEvent, void *pUserData) {
+static void caret_listener(AtspiEvent* pEvent, void* pUserData) {
   fprintf(stderr, "Caret\n");
   handle_event(pEvent);
   fprintf(stderr, "%s\n", get_text_around_cursor(EDIT_WORD).c_str());
 }
 
 void init() {
-  if (atspi_init() > 1) {
+  if (atspi_init()>1) {
     g_message("Could not initialise SPI - accessibility options disabled");
     return;
   }
-  INSTANCE.pFocusListener = atspi_event_listener_new(focus_listener, NULL, NULL);
-  INSTANCE.pCaretListener = atspi_event_listener_new(caret_listener, NULL, NULL);
-  INSTANCE.pAccessibleText = NULL;
+  INSTANCE.pFocusListener=atspi_event_listener_new(focus_listener, NULL, NULL);
+  INSTANCE.pCaretListener=atspi_event_listener_new(caret_listener, NULL, NULL);
+  INSTANCE.pAccessibleText=NULL;
   atspi_event_listener_register(INSTANCE.pFocusListener, "object:state-changed:focused", NULL);
   atspi_event_listener_register(INSTANCE.pCaretListener, "object:text-caret-moved", NULL);
 }
