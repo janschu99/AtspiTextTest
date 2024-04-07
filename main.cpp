@@ -15,15 +15,15 @@ typedef enum {
   EDIT_CHAR, EDIT_WORD, EDIT_SENTENCE, EDIT_PARAGRAPH, EDIT_FILE, EDIT_LINE, EDIT_PAGE, EDIT_SELECTION,
 } EditDistance;
 
-void dasher_editor_external_output(const char *szText/*, int iOffset unused*/) {
+void output(const char *szText/*, int iOffset unused*/) {
   atspi_generate_keyboard_event(0, szText, ATSPI_KEY_STRING, NULL);
 }
 
-void dasher_editor_external_delete(/*int iLength, int iOffset*/) {
+void deleteChar(/*int iLength, int iOffset*/) {
   atspi_generate_keyboard_event(XK_BackSpace, NULL, ATSPI_KEY_SYM, NULL);
 }
 
-std::string dasher_editor_external_get_context(int iOffset, int iLength) {
+std::string get_context(int iOffset, int iLength) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj != nullptr) {
     char* text = atspi_text_get_text(textobj, iOffset, iOffset + iLength, NULL);
@@ -36,7 +36,7 @@ std::string dasher_editor_external_get_context(int iOffset, int iLength) {
   return "";
 }
 
-int dasher_editor_external_get_offset() {
+int get_offset() {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (!textobj) return 0;
   if (atspi_text_get_n_selections(textobj, NULL) == 0)
@@ -47,36 +47,7 @@ int dasher_editor_external_get_offset() {
   return ret;
 }
 
-void dasher_editor_external_handle_focus(const AtspiEvent *pEvent) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (textobj) {
-    g_object_unref(textobj);
-    textobj = NULL;
-  }
-  AtspiAccessible *acc = pEvent->source;
-  g_object_ref(acc);
-  textobj = atspi_accessible_get_text_iface(acc);
-  INSTANCE.pAccessibleText = textobj;
-  if (textobj) {
-    g_object_ref(textobj);
-  }
-  g_object_unref(acc);
-}
-
-void dasher_editor_external_handle_caret(const AtspiEvent *pEvent) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (textobj) {
-    g_object_unref(textobj);
-    textobj = NULL;
-  }
-  AtspiAccessible *acc = pEvent->source;
-  g_object_ref(acc);
-  textobj = atspi_accessible_get_text(acc);
-  INSTANCE.pAccessibleText = textobj;
-  g_object_unref(acc);
-}
-
-void dasher_editor_external_move(bool bForwards, EditDistance iDist) {
+void move(bool bForwards, EditDistance iDist) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj == nullptr) return;
   GError *err = nullptr;
@@ -136,7 +107,7 @@ void dasher_editor_external_move(bool bForwards, EditDistance iDist) {
   }
 }
 
-std::string dasher_editor_external_get_text_around_cursor(EditDistance distance) {
+std::string get_text_around_cursor(EditDistance distance) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj == nullptr) return "";
   GError *err = nullptr;
@@ -186,16 +157,45 @@ std::string dasher_editor_external_get_text_around_cursor(EditDistance distance)
   return text;
 }
 
+void handle_focus(const AtspiEvent *pEvent) {
+  AtspiText *textobj = INSTANCE.pAccessibleText;
+  if (textobj) {
+    g_object_unref(textobj);
+    textobj = NULL;
+  }
+  AtspiAccessible *acc = pEvent->source;
+  g_object_ref(acc);
+  textobj = atspi_accessible_get_text_iface(acc);
+  INSTANCE.pAccessibleText = textobj;
+  if (textobj) {
+    g_object_ref(textobj);
+  }
+  g_object_unref(acc);
+}
+
+void handle_caret(const AtspiEvent *pEvent) {
+  AtspiText *textobj = INSTANCE.pAccessibleText;
+  if (textobj) {
+    g_object_unref(textobj);
+    textobj = NULL;
+  }
+  AtspiAccessible *acc = pEvent->source;
+  g_object_ref(acc);
+  textobj = atspi_accessible_get_text_iface(acc);
+  INSTANCE.pAccessibleText = textobj;
+  g_object_unref(acc);
+}
+
 static void focus_listener(AtspiEvent *pEvent, void *pUserData) {
   fprintf(stderr, "Focus\n");
-  dasher_editor_external_handle_focus(pEvent);
-  dasher_editor_external_move(true, EDIT_CHAR);
+  handle_focus(pEvent);
+  move(true, EDIT_CHAR);
 }
 
 static void caret_listener(AtspiEvent *pEvent, void *pUserData) {
   fprintf(stderr, "Caret\n");
-  dasher_editor_external_handle_caret(pEvent);
-  fprintf(stderr, "%s\n", dasher_editor_external_get_text_around_cursor(EDIT_WORD).c_str());
+  handle_caret(pEvent);
+  fprintf(stderr, "%s\n", get_text_around_cursor(EDIT_WORD).c_str());
 }
 
 void init() {
@@ -219,7 +219,7 @@ void unregister() {
 
 int main() {
   init();
-  dasher_editor_external_output("Test");
+  output("Test");
   atspi_event_main();
   return 0;
 }
