@@ -28,8 +28,7 @@ void deleteChar() {
   atspi_generate_keyboard_event(XK_BackSpace, NULL, ATSPI_KEY_SYM, NULL);
 }
 
-std::string get_context(int iOffset, int iLength) {
-  AtspiText* textobj = INSTANCE.pAccessibleText;
+std::string get_context(AtspiText* textobj, int iOffset, int iLength) {
   if (textobj!=NULL) {
     char* text = atspi_text_get_text(textobj, iOffset, iOffset+iLength, NULL);
     if (text!=NULL) {
@@ -41,8 +40,7 @@ std::string get_context(int iOffset, int iLength) {
   return "";
 }
 
-void move(bool bForwards, EditDistance iDist) {
-  AtspiText* textobj = INSTANCE.pAccessibleText;
+void move(AtspiText* textobj, bool bForwards, EditDistance iDist) {
   if (textobj==NULL) return;
   GError* err = NULL;
   int caret_pos = atspi_text_get_caret_offset(textobj, &err);
@@ -101,8 +99,7 @@ void move(bool bForwards, EditDistance iDist) {
   }
 }
 
-std::string get_text_around_cursor(EditDistance distance) {
-  AtspiText* textobj = INSTANCE.pAccessibleText;
+std::string get_text_around_cursor(AtspiText* textobj, EditDistance distance) {
   if (textobj==NULL) return "";
   GError* err = NULL;
   int caret_pos = atspi_text_get_caret_offset(textobj, &err);
@@ -168,13 +165,13 @@ void focus_listener(AtspiEvent* pEvent, void* pUserData) {
   fprintf(stderr, "Focus\n");
   handle_event(pEvent);
   if (INSTANCE.pAccessibleText!=NULL) g_object_ref(INSTANCE.pAccessibleText);
-  move(true, EDIT_CHAR);
+  move(INSTANCE.pAccessibleText, true, EDIT_CHAR);
 }
 
 void caret_listener(AtspiEvent* pEvent, void* pUserData) {
   fprintf(stderr, "Caret\n");
   handle_event(pEvent);
-  fprintf(stderr, "%s\n", get_text_around_cursor(EDIT_WORD).c_str());
+  fprintf(stderr, "%s\n", get_text_around_cursor(INSTANCE.pAccessibleText, EDIT_WORD).c_str());
 }
 
 void init() {
