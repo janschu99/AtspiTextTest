@@ -36,17 +36,6 @@ std::string get_context(int iOffset, int iLength) {
   return "";
 }
 
-int get_offset() {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (!textobj) return 0;
-  if (atspi_text_get_n_selections(textobj, NULL) == 0)
-    return atspi_text_get_caret_offset(textobj, NULL);
-  AtspiRange *range = atspi_text_get_selection(textobj, 0, NULL);
-  int ret = std::min(range->start_offset, range->end_offset);
-  g_free(range);
-  return ret;
-}
-
 void move(bool bForwards, EditDistance iDist) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj == nullptr) return;
