@@ -166,14 +166,14 @@ void handle_event(const AtspiEvent* pEvent) {
   g_object_unref(acc);
 }
 
-static void focus_listener(AtspiEvent* pEvent, void* pUserData) {
+void focus_listener(AtspiEvent* pEvent, void* pUserData) {
   fprintf(stderr, "Focus\n");
   handle_event(pEvent);
   if (INSTANCE.pAccessibleText!=NULL) g_object_ref(INSTANCE.pAccessibleText);
   move(true, EDIT_CHAR);
 }
 
-static void caret_listener(AtspiEvent* pEvent, void* pUserData) {
+void caret_listener(AtspiEvent* pEvent, void* pUserData) {
   fprintf(stderr, "Caret\n");
   handle_event(pEvent);
   fprintf(stderr, "%s\n", get_text_around_cursor(EDIT_WORD).c_str());
