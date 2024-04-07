@@ -26,7 +26,7 @@ void dasher_editor_external_delete(/*int iLength, int iOffset*/) {
 std::string dasher_editor_external_get_context(int iOffset, int iLength) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj != nullptr) {
-    auto text = atspi_text_get_text(textobj, iOffset, iOffset + iLength, NULL);
+    char* text = atspi_text_get_text(textobj, iOffset, iOffset + iLength, NULL);
     if (text != nullptr) {
       std::string context = text;
       g_free(text);
@@ -80,13 +80,13 @@ void dasher_editor_external_move(bool bForwards, EditDistance iDist) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj == nullptr) return;
   GError *err = nullptr;
-  auto caret_pos = atspi_text_get_caret_offset(textobj, &err);
+  int caret_pos = atspi_text_get_caret_offset(textobj, &err);
   if (err != nullptr) {
     fprintf(stderr, "Failed to get the caret: %s\n", err->message);
     g_error_free(err);
     return;
   }
-  auto length = atspi_text_get_character_count(textobj, &err);
+  int length = atspi_text_get_character_count(textobj, &err);
   if (err != nullptr) {
     fprintf(stderr, "Failed to get the character count: %s\n", err->message);
     g_error_free(err);
@@ -140,7 +140,7 @@ std::string dasher_editor_external_get_text_around_cursor(EditDistance distance)
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj == nullptr) return "";
   GError *err = nullptr;
-  auto caret_pos = atspi_text_get_caret_offset(textobj, &err);
+  int caret_pos = atspi_text_get_caret_offset(textobj, &err);
   if (err != nullptr) {
     fprintf(stderr, "Failed to get the caret offset: %s\n", err->message);
     g_error_free(err);
@@ -150,8 +150,8 @@ std::string dasher_editor_external_get_text_around_cursor(EditDistance distance)
   AtspiTextGranularity granularity;
   switch (distance) {
     case EDIT_FILE: {
-      auto length = atspi_text_get_character_count(textobj, nullptr);
-      auto gtext = atspi_text_get_text(textobj, 0, length, nullptr);
+      int length = atspi_text_get_character_count(textobj, nullptr);
+      char* gtext = atspi_text_get_text(textobj, 0, length, nullptr);
       text = gtext;
       g_free(gtext);
       return text;
@@ -173,7 +173,7 @@ std::string dasher_editor_external_get_text_around_cursor(EditDistance distance)
     default:
       return "";
   }
-  auto* range = atspi_text_get_string_at_offset(textobj, caret_pos, granularity, &err);
+  AtspiTextRange* range = atspi_text_get_string_at_offset(textobj, caret_pos, granularity, &err);
   if (err != nullptr) {
     fprintf(stderr, "Failed to get the caret offset: %s\n", err->message);
     g_error_free(err);
