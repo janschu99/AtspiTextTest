@@ -32,9 +32,9 @@ void deleteChar() {
 
 std::string get_context(int iOffset, int iLength) {
   AtspiText* textobj = INSTANCE.pAccessibleText;
-  if (textobj!=nullptr) {
+  if (textobj!=NULL) {
     char* text = atspi_text_get_text(textobj, iOffset, iOffset+iLength, NULL);
-    if (text!=nullptr) {
+    if (text!=NULL) {
       std::string context = text;
       free(text);
       return context;
@@ -45,16 +45,16 @@ std::string get_context(int iOffset, int iLength) {
 
 void move(bool bForwards, EditDistance iDist) {
   AtspiText* textobj = INSTANCE.pAccessibleText;
-  if (textobj==nullptr) return;
-  GError* err = nullptr;
+  if (textobj==NULL) return;
+  GError* err = NULL;
   int caret_pos = atspi_text_get_caret_offset(textobj, &err);
-  if (err!=nullptr) {
+  if (err!=NULL) {
     fprintf(stderr, "Failed to get the caret: %s\n", err->message);
     g_error_free(err);
     return;
   }
   int length = atspi_text_get_character_count(textobj, &err);
-  if (err!=nullptr) {
+  if (err!=NULL) {
     fprintf(stderr, "Failed to get the character count: %s\n", err->message);
     g_error_free(err);
     return;
@@ -83,20 +83,20 @@ void move(bool bForwards, EditDistance iDist) {
     default:
       break;
   }
-  AtspiTextRange* range = nullptr;
+  AtspiTextRange* range = NULL;
   if (boundary!=ATSPI_TEXT_BOUNDARY_CHAR) {
     if (bForwards) range=atspi_text_get_text_after_offset(textobj, caret_pos, boundary, &err);
     else range=atspi_text_get_text_before_offset(textobj, caret_pos, boundary, &err);
-    if (err!=nullptr) {
+    if (err!=NULL) {
       fprintf(stderr, "Failed to get the text after/befor the offset: %s\n", err->message);
       g_error_free(err);
       return;
     }
-    if (range!=nullptr) new_position=range->start_offset;
+    if (range!=NULL) new_position=range->start_offset;
     g_free(range);
   }
   atspi_text_set_caret_offset(textobj, new_position, &err);
-  if (err!=nullptr) {
+  if (err!=NULL) {
     fprintf(stderr, "Failed to set the caret offset: %s\n", err->message);
     g_error_free(err);
     return;
@@ -105,10 +105,10 @@ void move(bool bForwards, EditDistance iDist) {
 
 std::string get_text_around_cursor(EditDistance distance) {
   AtspiText* textobj = INSTANCE.pAccessibleText;
-  if (textobj==nullptr) return "";
-  GError* err = nullptr;
+  if (textobj==NULL) return "";
+  GError* err = NULL;
   int caret_pos = atspi_text_get_caret_offset(textobj, &err);
-  if (err!=nullptr) {
+  if (err!=NULL) {
     fprintf(stderr, "Failed to get the caret offset: %s\n", err->message);
     g_error_free(err);
     return "";
@@ -117,8 +117,8 @@ std::string get_text_around_cursor(EditDistance distance) {
   AtspiTextGranularity granularity;
   switch (distance) {
     case EDIT_FILE: {
-      int length = atspi_text_get_character_count(textobj, nullptr);
-      char* textBuffer = atspi_text_get_text(textobj, 0, length, nullptr);
+      int length = atspi_text_get_character_count(textobj, NULL);
+      char* textBuffer = atspi_text_get_text(textobj, 0, length, NULL);
       text=textBuffer;
       free(textBuffer);
       return text;
@@ -141,12 +141,12 @@ std::string get_text_around_cursor(EditDistance distance) {
       return "";
   }
   AtspiTextRange* range = atspi_text_get_string_at_offset(textobj, caret_pos, granularity, &err);
-  if (err!=nullptr) {
+  if (err!=NULL) {
     fprintf(stderr, "Failed to get the caret offset: %s\n", err->message);
     g_error_free(err);
     return "";
   }
-  if (range!=nullptr) {
+  if (range!=NULL) {
     text=range->content;
     free(range);
   }
