@@ -157,23 +157,7 @@ std::string get_text_around_cursor(EditDistance distance) {
   return text;
 }
 
-void handle_focus(const AtspiEvent *pEvent) {
-  AtspiText *textobj = INSTANCE.pAccessibleText;
-  if (textobj) {
-    g_object_unref(textobj);
-    textobj = NULL;
-  }
-  AtspiAccessible *acc = pEvent->source;
-  g_object_ref(acc);
-  textobj = atspi_accessible_get_text_iface(acc);
-  INSTANCE.pAccessibleText = textobj;
-  if (textobj) {
-    g_object_ref(textobj);
-  }
-  g_object_unref(acc);
-}
-
-void handle_caret(const AtspiEvent *pEvent) {
+void handle_event(const AtspiEvent *pEvent) {
   AtspiText *textobj = INSTANCE.pAccessibleText;
   if (textobj) {
     g_object_unref(textobj);
@@ -188,13 +172,16 @@ void handle_caret(const AtspiEvent *pEvent) {
 
 static void focus_listener(AtspiEvent *pEvent, void *pUserData) {
   fprintf(stderr, "Focus\n");
-  handle_focus(pEvent);
+  handle_event(pEvent);
+  if (INSTANCE.pAccessibleText) {
+    g_object_ref(INSTANCE.pAccessibleText);
+  }
   move(true, EDIT_CHAR);
 }
 
 static void caret_listener(AtspiEvent *pEvent, void *pUserData) {
   fprintf(stderr, "Caret\n");
-  handle_caret(pEvent);
+  handle_event(pEvent);
   fprintf(stderr, "%s\n", get_text_around_cursor(EDIT_WORD).c_str());
 }
 
