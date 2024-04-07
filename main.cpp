@@ -29,7 +29,7 @@ std::string get_context(int iOffset, int iLength) {
     char* text = atspi_text_get_text(textobj, iOffset, iOffset + iLength, NULL);
     if (text != nullptr) {
       std::string context = text;
-      g_free(text);
+      free(text);
       return context;
     }
   }
@@ -124,7 +124,7 @@ std::string get_text_around_cursor(EditDistance distance) {
       int length = atspi_text_get_character_count(textobj, nullptr);
       char* gtext = atspi_text_get_text(textobj, 0, length, nullptr);
       text = gtext;
-      g_free(gtext);
+      free(gtext);
       return text;
     }
       break;
@@ -152,7 +152,7 @@ std::string get_text_around_cursor(EditDistance distance) {
   }
   if (range != nullptr) {
     text = range->content;
-    g_free(range);
+    free(range);
   }
   return text;
 }
