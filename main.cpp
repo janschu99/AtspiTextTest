@@ -9,9 +9,7 @@ typedef enum {
   EDIT_SENTENCE,
   EDIT_PARAGRAPH,
   EDIT_FILE,
-  EDIT_LINE,
-  EDIT_PAGE,
-  EDIT_SELECTION
+  EDIT_LINE
 } EditDistance;
 
 typedef struct {
